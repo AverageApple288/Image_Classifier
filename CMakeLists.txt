@@ -31,8 +31,8 @@ add_executable(Image_Classifier main.cpp
         include/model/Activation.h
         src/model/Optimiser.cpp
         include/model/Optimiser.h
-        src/filters/Conv2DFilter.cpp
-        include/filters/Conv2DFilter.h
+        src/model/Model.cpp
+        include/model/Model.h
 )
 
 target_include_directories(Image_Classifier PRIVATE ${GTKMM_INCLUDE_DIRS})

@@ -50,7 +50,7 @@ protected:
 	void on_left_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
 	void on_right_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
 
-	void on_upload_button_clicked() const;
+	void on_upload_button_clicked();
 };
 
 

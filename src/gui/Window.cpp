@@ -3,9 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
+#include "../../include/model/Model.h"
 #include "../../include/utils/Utilities.h"
-#include "../../include/utils/Matrix3D.h"
-#include "../../include/utils/DataLoader.h"
 
 Window::Window() {
 	set_title("Image Classifier");
@@ -193,56 +192,29 @@ void Window::on_right_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& r
 	}
 }
 
-void Window::on_upload_button_clicked() const {
+void Window::on_upload_button_clicked() {
+	auto model = Model();
+
 	const std::string dataset1_dir = "./datasets/dataset_one";
-    std::string first_image_path;
+	const std::string dataset2_dir = "./datasets/dataset_two";
 
-    // Locate the first valid image file in the directory
-    if (std::filesystem::exists(dataset1_dir)) {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(dataset1_dir)) {
-            if (entry.is_regular_file()) {
-	            if (std::string ext = entry.path().extension().string(); ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
-                    first_image_path = entry.path().string();
-                    break;
-                }
-            }
-        }
-    }
+	int counter = 0;
 
-    if (first_image_path.empty()) {
-        std::cerr << "No image found in dataset one.\n";
-        return;
-    }
+	if (std::filesystem::exists(dataset1_dir)) {
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(dataset1_dir)) {
+			if (entry.is_regular_file()) {
+				if (std::string ext = entry.path().extension().string(); ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+					model.add_image(entry.path().string());
+					if (counter % 100 == 0) {
+						std::cout << counter << std::endl;
+					}
+					counter++;
+				}
+			}
+		}
+	}
 
-    // 2. Load, resize to 32x32, and convert to Matrix3D
-    try {
-        std::cout << "Testing DataLoader on: " << first_image_path << "\n";
-
-        const int target_w = 100;
-        const int target_h = 100;
-        Matrix3D tensor = DataLoader::load_image(first_image_path, target_w, target_h);
-
-        // 3. Verify tensor dimensions and sample pixel values
-        std::cout << "Tensor shape: ("
-                  << tensor.depth() << " channels, "
-                  << tensor.rows() << " rows, "
-                  << tensor.cols() << " cols)\n";
-
-        // Print normalized RGB values of the top-left pixel (row 0, col 0)
-        std::cout << "Top-left pixel RGB: ["
-                  << tensor(0, 0, 0) << ", "  // Red channel
-                  << tensor(1, 0, 0) << ", "  // Green channel
-                  << tensor(2, 0, 0) << "]\n"; // Blue channel
-
-        // Print normalized RGB values of the center pixel
-        std::cout << "Center pixel RGB: ["
-                  << tensor(0, target_h / 2, target_w / 2) << ", "
-                  << tensor(1, target_h / 2, target_w / 2) << ", "
-                  << tensor(2, target_h / 2, target_w / 2) << "]\n";
-
-    } catch (const std::exception& e) {
-        std::cerr << "DataLoader test failed: " << e.what() << "\n";
-    }
+	std::cout << "Finished first convolution step with model size of " << sizeof(model) << " bytes\n";
 }
 
 Window::~Window() {

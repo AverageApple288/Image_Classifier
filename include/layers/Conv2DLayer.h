@@ -23,6 +23,8 @@ private:
 public:
 	Conv2DLayer(size_t num_filters, size_t filter_size, size_t input_depth);
 
+	Matrix3D forward_pass(const Matrix3D& input);
+
 	[[nodiscard]] size_t get_num_filters() const;
 	[[nodiscard]] size_t get_filter_size() const;
 
