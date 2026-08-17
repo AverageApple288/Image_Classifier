@@ -4,6 +4,7 @@ project(Image_Classifier)
 set(CMAKE_CXX_STANDARD 26)
 
 find_package(PkgConfig REQUIRED)
+find_package(OpenMP REQUIRED)
 pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
 
 add_executable(Image_Classifier main.cpp
@@ -27,8 +28,6 @@ add_executable(Image_Classifier main.cpp
         include/model/NeuralNetwork.h
         src/model/LossFunction.cpp
         include/model/LossFunction.h
-        src/model/Activation.cpp
-        include/model/Activation.h
         src/model/Optimiser.cpp
         include/model/Optimiser.h
         src/model/Model.cpp
@@ -39,5 +38,6 @@ target_include_directories(Image_Classifier PRIVATE ${GTKMM_INCLUDE_DIRS})
 target_link_libraries(
         Image_Classifier PRIVATE ${GTKMM_LIBRARIES}
         zip
+        OpenMP::OpenMP_CXX
 )
 target_compile_options(Image_Classifier PRIVATE ${GTKMM_CFLAGS_OTHER})

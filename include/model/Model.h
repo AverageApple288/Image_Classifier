@@ -6,16 +6,20 @@
 #define IMAGE_CLASSIFIER_MODEL_H
 #include <string>
 #include <vector>
+
+#include "../layers/Conv2DLayer.h"
 #include "../utils/Matrix3D.h"
 
 class Model {
 public:
 	Model();
 
-	void add_image(const std::string& filepath);
+	void train_batch(const std::vector<std::string>& filepath);
 
 private:
-	std::vector<Matrix3D> output_feature_maps;
+	Conv2DLayer layer1_;
+	Conv2DLayer layer2_;
+	Conv2DLayer layer3_;
 };
 
 

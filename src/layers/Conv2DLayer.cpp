@@ -15,16 +15,16 @@ Conv2DLayer::Conv2DLayer(const size_t num_filters, const size_t filter_size, con
     : num_filters_(num_filters), filter_size_(filter_size), input_depth_(input_depth)
 {
     // Calculate the number of input connections to a single filter
-    const auto n_in = static_cast<double>(input_depth_ * filter_size_ * filter_size_);
+    const auto n_in = static_cast<float>(input_depth_ * filter_size_ * filter_size_);
 
     // Calculate the standard deviation for He Initialization (for ReLU)
-    const double std_dev = std::sqrt(2.0 / n_in);
+    const float std_dev = std::sqrt(2.0 / n_in);
 
     // Set up the random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
     // Define the normal distribution centered at 0.0 with the calculated spread
-    std::normal_distribution<double> dist(0.0, std_dev);
+    std::normal_distribution<float> dist(0.0, std_dev);
 
     // 4. Generate the filters
     for (size_t i = 0; i < num_filters_; ++i) {
@@ -58,13 +58,13 @@ Matrix3D Conv2DLayer::forward_pass(const Matrix3D &input) {
 	for (size_t f = 0; f < num_filters_; ++f) {
 		for (size_t y = 0 ; y < filter_size_; ++y) {
 			for (size_t x = 0; x < filter_size_; ++x) {
-				double sum = 0.0;
+				float sum = 0.0;
 
 				for (size_t d = 0; d < input_depth_; ++d) {
 					for (size_t r = 0; r < filter_size_; ++r) {
 						for (size_t c = 0; c < filter_size_; ++c) {
-							const double pixel = input(d, y + r, x + c);
-							const double weight = filters_[f](d, r, c);
+							const float pixel = input(d, y + r, x + c);
+							const float weight = filters_[f](d, r, c);
 
 							sum += pixel * weight;
 						}

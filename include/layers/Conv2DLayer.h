@@ -18,7 +18,7 @@ private:
 
 	std::vector<Matrix3D> filters_;
 
-	std::vector<double> biases_;
+	std::vector<float> biases_;
 
 public:
 	Conv2DLayer(size_t num_filters, size_t filter_size, size_t input_depth);

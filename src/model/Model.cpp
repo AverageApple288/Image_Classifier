@@ -11,25 +11,41 @@
 #include <iostream>
 #include <string>
 
-Model::Model() = default;
+struct Context {
+	Matrix3D input;
+	Matrix3D output1;
+	Matrix3D output2;
+	Matrix3D output3;
+	Matrix3D activated;
+};
 
-void Model::add_image(const std::string& path) {
+Model::Model() : layer1_(16, 3, 3), layer2_(32, 3, 16), layer3_(64, 3, 32) {
+}
+
+void Model::train_batch(const std::vector<std::string>& file_paths) {
+	std::vector<Context> batch_contexts(file_paths.size());
+
 	try {
-		std::cout << "Processing image: " << path << "\n";
+		#pragma omp parallel for schedule(dynamic)
+		for (size_t i = 0; i < file_paths.size(); ++i) {
+			try {
+				constexpr int target_w = 128;
+				constexpr int target_h = 128;
+				Matrix3D tensor = DataLoader::load_image(file_paths[i], target_w, target_h);
 
-		constexpr int target_w = 128;
-		constexpr int target_h = 128;
-		const Matrix3D tensor = DataLoader::load_image(path, target_w, target_h);
+				Matrix3D output_map1 = layer1_.forward_pass(tensor);
+				Matrix3D output_map2 = layer2_.forward_pass(output_map1);
+				Matrix3D output_map3 = layer3_.forward_pass(output_map2);
+				Matrix3D activated_map = output_map3.apply_relu();
 
-		auto layer1 = Conv2DLayer(16, 3, 3);
-		auto layer2 = Conv2DLayer(32, 3, 16);
-		auto layer3 = Conv2DLayer(64, 3, 32);
-
-		const Matrix3D output_map1 = layer1.forward_pass(tensor);
-		const Matrix3D output_map2 = layer2.forward_pass(output_map1);
-		const Matrix3D output_map3 = layer3.forward_pass(output_map2);
-
-		this->output_feature_maps.push_back(output_map3);
+				batch_contexts[i] = Context{tensor, output_map1, output_map2, output_map3, activated_map};
+			} catch (const std::exception& e) {
+				#pragma omp critical
+				{
+					std::cerr << "Error processing image in batch: " << e.what() << "\n";
+				}
+			}
+		}
 	} catch (const std::exception& e) {
 		std::cerr << "DataLoader test failed: " << e.what() << "\n";
 	}

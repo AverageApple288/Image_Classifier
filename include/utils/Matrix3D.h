@@ -10,14 +10,15 @@
 
 class Matrix3D {
 private:
-	size_t depth_;
-	size_t rows_;
-	size_t cols_;
-	std::vector<double> data_;
+	size_t depth_{};
+	size_t rows_{};
+	size_t cols_{};
+	std::vector<float> data_;
 
 public:
 	// Constructor
-	Matrix3D(size_t depth, size_t rows, size_t cols, double initial_value = 0.0);
+	Matrix3D(size_t depth, size_t rows, size_t cols, float initial_value = 0.0f);
+	Matrix3D();
 
 	// Getters
 	[[nodiscard]] size_t depth() const;
@@ -25,8 +26,10 @@ public:
 	[[nodiscard]] size_t cols() const;
 
 	// Index operators
-	double& operator()(size_t d, size_t r, size_t c);
-	const double& operator()(size_t d, size_t r, size_t c) const;
+	float& operator()(size_t d, size_t r, size_t c);
+	const float& operator()(size_t d, size_t r, size_t c) const;
+
+	Matrix3D apply_relu();
 
 	// Utility
 	void print() const;

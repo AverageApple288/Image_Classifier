@@ -2,6 +2,8 @@
 
 #include <filesystem>
 #include <iostream>
+#include <thread>
+#include <omp.h>
 
 #include "../../include/model/Model.h"
 #include "../../include/utils/Utilities.h"
@@ -100,6 +102,13 @@ Window::Window() {
 	upload_btn_.signal_clicked().connect(
 		sigc::mem_fun(*this, &Window::on_upload_button_clicked)
 	);
+
+	progress_bar_.set_show_text(true);
+	progress_bar_.set_fraction(0.0);
+	progress_bar_.set_visible(false);
+	card_vbox_.append(progress_bar_);
+
+	dispatcher_.connect(sigc::mem_fun(*this, &Window::update_progress_ui));
 }
 
 void Window::on_left_browse_clicked() {
@@ -193,28 +202,71 @@ void Window::on_right_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& r
 }
 
 void Window::on_upload_button_clicked() {
-	auto model = Model();
+	upload_btn_.set_sensitive(false);
+	left_browse_btn_.set_sensitive(false);
+	right_browse_btn_.set_sensitive(false);
 
-	const std::string dataset1_dir = "./datasets/dataset_one";
-	const std::string dataset2_dir = "./datasets/dataset_two";
+	progress_bar_.set_fraction(0.0);
+	progress_bar_.set_visible(true);
 
-	int counter = 0;
+	std::thread worker_thread([this] {
+		int total_cores = std::thread::hardware_concurrency();
+		int threads_to_use = std::max(1, total_cores - 2);
+		omp_set_num_threads(threads_to_use);
 
-	if (std::filesystem::exists(dataset1_dir)) {
-		for (const auto& entry : std::filesystem::recursive_directory_iterator(dataset1_dir)) {
-			if (entry.is_regular_file()) {
-				if (std::string ext = entry.path().extension().string(); ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
-					model.add_image(entry.path().string());
-					if (counter % 100 == 0) {
-						std::cout << counter << std::endl;
+		try {
+			auto model = Model();
+
+			const std::string dataset1_dir = "./datasets/dataset_one";
+			const std::string dataset2_dir = "./datasets/dataset_two";
+			std::vector<std::string> image_paths;
+
+			// Collect all valid file paths sequentially
+			if (std::filesystem::exists(dataset1_dir)) {
+				for (const auto& entry : std::filesystem::recursive_directory_iterator(dataset1_dir)) {
+					if (entry.is_regular_file()) {
+						if (std::string ext = entry.path().extension().string(); ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+							image_paths.push_back(entry.path().string());
+						}
 					}
-					counter++;
 				}
 			}
-		}
-	}
 
-	std::cout << "Finished first convolution step with model size of " << sizeof(model) << " bytes\n";
+			size_t total_images = image_paths.size();
+			size_t processed_images = 0;
+
+			constexpr size_t batch_size = 64;
+
+			for (size_t i = 0; i < image_paths.size(); i += batch_size) {
+				const size_t current_batch_size = std::min(batch_size, image_paths.size() - i);
+
+				std::vector batch_paths(
+					image_paths.begin() + i,
+					image_paths.begin() + i + current_batch_size
+				);
+
+				model.train_batch(batch_paths);
+
+				processed_images += current_batch_size;
+				progress_fraction_ = static_cast<double>(processed_images) / total_images;
+
+				dispatcher_.emit();
+			}
+
+			progress_bar_.set_visible(false);
+
+			std::cout << "Finished first convolution step" << std::endl;
+		} catch (const std::exception& e) {
+			std::cerr << "Error in background thread: " << e.what() << std::endl;
+		}
+	});
+
+	worker_thread.detach();
+}
+
+void Window::update_progress_ui() {
+	progress_bar_.set_fraction(progress_fraction_.load());
+	progress_bar_.set_text(std::to_string(static_cast<int>(progress_fraction_.load() * 100.0)) + "%");
 }
 
 Window::~Window() {

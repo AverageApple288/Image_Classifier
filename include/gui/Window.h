@@ -43,14 +43,19 @@ protected:
 
 	Gtk::Button upload_btn_;
 
+	Glib::Dispatcher dispatcher_;
+	Gtk::ProgressBar progress_bar_;
+	std::atomic<double> progress_fraction_{0.0};
+
 	void on_left_browse_clicked();
 	void on_right_browse_clicked();
 
-	// --- Async Callbacks for FileDialog ---
 	void on_left_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
 	void on_right_file_dialog_finish(const Glib::RefPtr<Gio::AsyncResult>& result, const Glib::RefPtr<Gtk::FileDialog>& dialog);
 
 	void on_upload_button_clicked();
+
+	void update_progress_ui();
 };
 
 
