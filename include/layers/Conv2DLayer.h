@@ -7,8 +7,7 @@
 
 #include <vector>
 #include <cstddef>
-
-class Matrix3D;
+#include "../utils/Matrix3D.h"
 
 class Conv2DLayer {
 private:
@@ -23,10 +22,7 @@ private:
 public:
 	Conv2DLayer(size_t num_filters, size_t filter_size, size_t input_depth);
 
-	Matrix3D forward_pass(const Matrix3D& input);
-
-	[[nodiscard]] size_t get_num_filters() const;
-	[[nodiscard]] size_t get_filter_size() const;
+	[[nodiscard]] Matrix3D forward_pass(const Matrix3D& input) const;
 
 	void print_filter(size_t filter_index) const;
 };

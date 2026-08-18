@@ -49,39 +49,35 @@ Conv2DLayer::Conv2DLayer(const size_t num_filters, const size_t filter_size, con
 }
 
 // Convolution logic
-Matrix3D Conv2DLayer::forward_pass(const Matrix3D &input) {
+Matrix3D Conv2DLayer::forward_pass(const Matrix3D &input) const {
 	const size_t out_rows = input.rows() - filter_size_ + 1;
 	const size_t out_cols = input.cols() - filter_size_ + 1;
 
 	Matrix3D output(num_filters_, out_rows, out_cols);
 
 	for (size_t f = 0; f < num_filters_; ++f) {
-		for (size_t y = 0 ; y < filter_size_; ++y) {
-			for (size_t x = 0; x < filter_size_; ++x) {
+		const auto& current_filter = filters_[f];
+		const float current_bias = biases_[f];
+
+		for (size_t y = 0 ; y < out_rows; ++y) {
+			for (size_t x = 0; x < out_cols; ++x) {
 				float sum = 0.0;
 
 				for (size_t d = 0; d < input_depth_; ++d) {
 					for (size_t r = 0; r < filter_size_; ++r) {
 						for (size_t c = 0; c < filter_size_; ++c) {
-							const float pixel = input(d, y + r, x + c);
-							const float weight = filters_[f](d, r, c);
-
-							sum += pixel * weight;
+							sum += input(d, y + r, x + c) * current_filter(d, r, c);
 						}
 					}
 				}
 
-				output(f, y, x) = sum + biases_[f];
+				output(f, y, x) = sum + current_bias;
 			}
 		}
 	}
 
 	return output;
 }
-
-// Getter Implementations
-size_t Conv2DLayer::get_num_filters() const { return num_filters_; }
-size_t Conv2DLayer::get_filter_size() const { return filter_size_; }
 
 // Debugging Method
 void Conv2DLayer::print_filter(const size_t filter_index) const {

@@ -235,7 +235,7 @@ void Window::on_upload_button_clicked() {
 			size_t total_images = image_paths.size();
 			size_t processed_images = 0;
 
-			constexpr size_t batch_size = 64;
+			constexpr size_t batch_size = 32;
 
 			for (size_t i = 0; i < image_paths.size(); i += batch_size) {
 				const size_t current_batch_size = std::min(batch_size, image_paths.size() - i);

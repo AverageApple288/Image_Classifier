@@ -16,8 +16,6 @@ add_executable(Image_Classifier main.cpp
         include/utils/Matrix3D.h
         src/utils/DataLoader.cpp
         include/utils/DataLoader.h
-        src/layers/Layer.cpp
-        include/layers/Layer.h
         src/layers/Conv2DLayer.cpp
         include/layers/Conv2DLayer.h
         src/layers/PoolingLayer.cpp

@@ -17,20 +17,6 @@ size_t Matrix3D::depth() const { return depth_; }
 size_t Matrix3D::rows() const { return rows_; }
 size_t Matrix3D::cols() const { return cols_; }
 
-float& Matrix3D::operator()(const size_t d, const size_t r, const size_t c) {
-	if (d >= depth_ || r >= rows_ || c >= cols_) {
-		throw std::out_of_range("Matrix3D index out of bounds");
-	}
-	return data_[d * (rows_ * cols_) + r * cols_ + c];
-}
-
-const float& Matrix3D::operator()(const size_t d, const size_t r, const size_t c) const {
-	if (d >= depth_ || r >= rows_ || c >= cols_) {
-		throw std::out_of_range("Matrix3D index out of bounds");
-	}
-	return data_[d * (rows_ * cols_) + r * cols_ + c];
-}
-
 Matrix3D Matrix3D::apply_relu() {
 	auto activated_matrix = Matrix3D(depth_, rows_, cols_, 0.0f);
 

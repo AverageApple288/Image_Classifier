@@ -26,8 +26,21 @@ public:
 	[[nodiscard]] size_t cols() const;
 
 	// Index operators
-	float& operator()(size_t d, size_t r, size_t c);
-	const float& operator()(size_t d, size_t r, size_t c) const;
+	float& operator()(size_t d, size_t r, size_t c) noexcept {
+		return data_[(d * rows_ + r) * cols_ + c];
+	}
+
+	const float& operator()(size_t d, size_t r, size_t c) const noexcept {
+		return data_[(d * rows_ + r) * cols_ + c];
+	}
+
+	// Checked version if needed for explicit validation
+	float& at(size_t d, size_t r, size_t c) {
+		if (d >= depth_ || r >= rows_ || c >= cols_) {
+			throw std::out_of_range("Matrix3D index out of bounds");
+		}
+		return data_[(d * rows_ + r) * cols_ + c];
+	}
 
 	Matrix3D apply_relu();
 
