@@ -31,10 +31,6 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) {
 				constexpr int target_h = 128;
 				Matrix3D tensor = DataLoader::load_image(path, target_w, target_h);
 
-				if (tensor.rows() < 3 || tensor.cols() < 3 || tensor.depth() == 0) {
-					continue;
-				}
-
 				// Block 1
 				Matrix3D output_map1 = layer1_.forward_pass(tensor);
 				Matrix3D activated_map1 = output_map1.apply_relu();
@@ -89,6 +85,31 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) {
 			d_logits[ctx.label] -= 1.0f;
 
 			std::vector<float> d_dense_input = dense_layer_.backward_pass(d_logits, ctx.dense_input);
+
+			const size_t d_depth = ctx.pooled3.depth();
+			const size_t d_rows = ctx.pooled3.rows();
+			const size_t d_cols = ctx.pooled3.cols();
+
+			Matrix3D d_pool3_output(d_depth, d_rows, d_cols);
+
+			size_t flat_index = 0;
+
+			for (size_t d = 0; d < d_depth; ++d) {
+				for (size_t r = 0; r < d_rows; ++r) {
+					for (size_t c = 0; c < d_cols; ++c) {
+						d_pool3_output(d, r, c) = d_dense_input[flat_index++];
+					}
+				}
+			}
+
+			Matrix3D d_conv3_output = pooling_layer3_.backward_pass(d_pool3_output, ctx.argmax3);
+			Matrix3D d_conv3_input = layer3_.backward_pass(Matrix3D::apply_relu_derivative(d_conv3_output, ctx.output3), ctx.pooled2);
+
+			Matrix3D d_conv2_output = pooling_layer2_.backward_pass(d_conv3_input, ctx.argmax2);
+			Matrix3D d_conv2_input  = layer2_.backward_pass(Matrix3D::apply_relu_derivative(d_conv2_output, ctx.output2), ctx.pooled1);
+
+			Matrix3D d_conv1_output = pooling_layer1_.backward_pass(d_conv2_input, ctx.argmax1);
+			Matrix3D d_input_tensor = layer1_.backward_pass(Matrix3D::apply_relu_derivative(d_conv1_output, ctx.output1), ctx.input);
 		}
 
 		float avg_batch_loss = batch_loss / batch.size();
@@ -96,6 +117,12 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) {
 
 		float learning_rate = 0.001f;
 		dense_layer_.update_weights(learning_rate, batch.size());
+
+		layer3_.update_weights(learning_rate, batch.size());
+
+		layer2_.update_weights(learning_rate, batch.size());
+
+		layer1_.update_weights(learning_rate, batch.size());
 	} catch (const std::exception& e) {
 		std::cerr << "DataLoader test failed: " << e.what() << "\n";
 	}

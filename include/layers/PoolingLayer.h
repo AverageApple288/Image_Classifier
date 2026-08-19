@@ -17,7 +17,9 @@ class PoolingLayer {
 public:
 	PoolingLayer(size_t window_size, size_t stride, size_t input_depth);
 
-	PoolResult forward_pass(const Matrix3D &input) const;
+	[[nodiscard]] PoolResult forward_pass(const Matrix3D &input) const;
+
+	[[nodiscard]] Matrix3D backward_pass(const Matrix3D& d_output, const Matrix3D& argmax_map) const;
 
 private:
 	size_t window_size_;

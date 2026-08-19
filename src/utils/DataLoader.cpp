@@ -39,7 +39,7 @@ Matrix3D DataLoader::load_image(const std::string& filepath, int target_width, i
 
 				// Extract the value (0-255), normalize it to (0.0-1.0), and
 				// assign it to the specific Depth (c), Row (y), and Column (x)
-				tensor(c, y, x) = resized_data[index] / 255.0;
+				tensor(c, y, x) = resized_data[index] / 255.0f;
 			}
 		}
 	}

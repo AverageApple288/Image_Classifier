@@ -30,6 +30,20 @@ Matrix3D Matrix3D::apply_relu() {
 	return activated_matrix;
 }
 
+Matrix3D Matrix3D::apply_relu_derivative(const Matrix3D& d_output, const Matrix3D& pre_activation) {
+	auto derivative_matrix = Matrix3D(pre_activation.depth(), pre_activation.rows(), pre_activation.cols(), 0.0f);
+
+	for (size_t d = 0; d < pre_activation.depth(); ++d) {
+		for (size_t r = 0; r < pre_activation.rows(); ++r) {
+			for (size_t c = 0; c < pre_activation.cols(); ++c) {
+				const float relu_gate = pre_activation(d, r, c) > 0.0f ? 1.0f : 0.0f;
+				derivative_matrix(d, r, c) = d_output(d, r, c) * relu_gate;
+			}
+		}
+	}
+	return derivative_matrix;
+}
+
 void Matrix3D::print() const {
 	for (size_t d = 0; d < depth_; ++d) {
 		std::cout << "Depth " << d << ":\n";

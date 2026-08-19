@@ -44,6 +44,8 @@ public:
 
 	Matrix3D apply_relu();
 
+	static Matrix3D apply_relu_derivative(const Matrix3D& d_output, const Matrix3D& pre_activation);
+
 	[[nodiscard]] const std::vector<float>& get_flat_data() const {
 		return data_;
 	}

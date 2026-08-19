@@ -16,13 +16,19 @@ private:
 	size_t input_depth_;
 
 	std::vector<Matrix3D> filters_;
-
 	std::vector<float> biases_;
+
+	std::vector<Matrix3D> d_filters_;
+	std::vector<float> d_biases_;
 
 public:
 	Conv2DLayer(size_t num_filters, size_t filter_size, size_t input_depth);
 
 	[[nodiscard]] Matrix3D forward_pass(const Matrix3D& input) const;
+
+	[[nodiscard]] Matrix3D backward_pass(const Matrix3D& d_output, const Matrix3D& input);
+
+	void update_weights(float learning_rate, size_t batch_size);
 
 	void print_filter(size_t filter_index) const;
 };
