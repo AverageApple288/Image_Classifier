@@ -15,26 +15,19 @@
 Matrix3D DataLoader::load_image(const std::string& filepath, int target_width, int target_height) {
 	int original_width, original_height, channels;
 
-	// 1. LOAD THE IMAGE
-	// We force the load to 3 channels (RGB) to standardize inputs, dropping Alpha (transparency)
 	unsigned char* img_data = stbi_load(filepath.c_str(), &original_width, &original_height, &channels, 3);
 
 	if (!img_data) {
 		throw std::runtime_error("Failed to load image: " + filepath);
 	}
 
-	// 2. RESIZE THE IMAGE
-	// Allocate memory for the new resized image array
 	auto* resized_data = new unsigned char[target_width * target_height * 3];
 
-	// Run the STB resize function (uses bilinear interpolation)
 	stbir_resize_uint8_linear(img_data, original_width, original_height, 0,
 						  resized_data, target_width, target_height, 0, STBIR_RGB);
 
-	// Free the original image data from memory as we no longer need it
 	stbi_image_free(img_data);
 
-	// 3. TRANSFER TO MATRIX3D & NORMALIZE
 	Matrix3D tensor(3, target_height, target_width);
 
 	// Loop through every pixel in the resized image

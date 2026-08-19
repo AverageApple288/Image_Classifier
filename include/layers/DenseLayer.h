@@ -13,12 +13,19 @@ public:
 
 	[[nodiscard]] std::vector<float> forward_pass(const std::vector<float>& input) const;
 
+	[[nodiscard]] std::vector<float> backward_pass(const std::vector<float>& d_logits, const std::vector<float>& cached_input);
+
+	void update_weights(float learning_rate, size_t batch_size);
+
 private:
 	size_t num_inputs_;
 	size_t num_outputs_;
 
 	std::vector<float> weights_;
 	std::vector<float> biases_;
+
+	std::vector<float> d_weights_;
+	std::vector<float> d_biases_;
 };
 
 

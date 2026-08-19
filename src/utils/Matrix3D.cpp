@@ -23,13 +23,10 @@ Matrix3D Matrix3D::apply_relu() {
 	for (size_t d = 0; d < depth_; ++d) {
 		for (size_t r = 0; r < rows_; ++r) {
 			for (size_t c = 0; c < cols_; ++c) {
-				if ((*this)(d, r, c) < 0.0f) {
-					activated_matrix(d, r, c) = 0.0f;
-				}
+				activated_matrix(d, r, c) = std::max(0.0f, (*this)(d, r, c));
 			}
 		}
 	}
-
 	return activated_matrix;
 }
 

@@ -267,8 +267,6 @@ void Window::on_upload_button_clicked() {
 			}
 
 			progress_bar_.set_visible(false);
-
-			std::cout << "Finished first convolution step" << std::endl;
 		} catch (const std::exception& e) {
 			std::cerr << "Error in background thread: " << e.what() << std::endl;
 		}

@@ -3,6 +3,9 @@
 //
 
 #include "../../include/model/Model.h"
+
+#include <cmath>
+
 #include "../../include/utils/Matrix3D.h"
 #include "../../include/utils/DataLoader.h"
 #include "../../include/layers/Conv2DLayer.h"
@@ -11,11 +14,12 @@
 #include <filesystem>
 #include <iostream>
 
-Model::Model() : layer1_(16, 3, 3), layer2_(32, 3, 16), layer3_(64, 3, 32), pooling_layer1_(2, 2, 16), pooling_layer2_(2, 2, 32), pooling_layer3_(2, 2, 64), dense_layer_(16348, 2) {
+Model::Model() : layer1_(16, 3, 3), layer2_(32, 3, 16), layer3_(64, 3, 32), pooling_layer1_(2, 2, 16), pooling_layer2_(2, 2, 32), pooling_layer3_(2, 2, 64), dense_layer_(12544, 2) {
 }
 
-void Model::train_batch(const std::vector<LabeledSample>& batch) const {
+void Model::train_batch(const std::vector<LabeledSample>& batch) {
 	std::vector<Context> batch_contexts(batch.size());
+	float batch_loss = 0.0f;
 
 	try {
 		#pragma omp parallel for schedule(dynamic)
@@ -56,12 +60,6 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) const {
 
 				const std::vector<float>& logits = dense_layer_.forward_pass(flat_features);
 
-				const std::vector<float> probabilities = LossFunction::softmax(logits);
-
-				float correct_class_probability = probabilities[label];
-
-				float loss = LossFunction::cross_entropy(correct_class_probability);
-
 				batch_contexts[i] = Context{
 					tensor,
 					output_map1, activated_map1, pooled_map1, argmax_map1,
@@ -69,9 +67,7 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) const {
 					output_map3, activated_map3, pooled_map3, argmax_map3,
 					flat_features,
 					logits,
-					probabilities,
-					label,
-					loss
+					label
 				};
 			} catch (const std::exception& e) {
 				#pragma omp critical
@@ -80,6 +76,26 @@ void Model::train_batch(const std::vector<LabeledSample>& batch) const {
 				}
 			}
 		}
+
+		for (size_t i = 0; i < batch.size(); ++i) {
+			Context& ctx = batch_contexts[i];
+
+			std::vector<float> probabilities = LossFunction::softmax(ctx.logits);
+
+			float loss = LossFunction::cross_entropy(probabilities[ctx.label]);
+			batch_loss += loss;
+
+			std::vector<float> d_logits = probabilities;
+			d_logits[ctx.label] -= 1.0f;
+
+			std::vector<float> d_dense_input = dense_layer_.backward_pass(d_logits, ctx.dense_input);
+		}
+
+		float avg_batch_loss = batch_loss / batch.size();
+		std::cout << "Batch Loss: " << avg_batch_loss << std::endl;
+
+		float learning_rate = 0.001f;
+		dense_layer_.update_weights(learning_rate, batch.size());
 	} catch (const std::exception& e) {
 		std::cerr << "DataLoader test failed: " << e.what() << "\n";
 	}

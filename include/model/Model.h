@@ -27,16 +27,14 @@ struct Context {
 	// Dense / Classification
 	std::vector<float> dense_input;
 	std::vector<float> logits;
-	std::vector<float> probabilities;
 	size_t label;
-	float loss;
 };
 
 class Model {
 public:
 	Model();
 
-	void train_batch(const std::vector<LabeledSample>& batch) const;
+	void train_batch(const std::vector<LabeledSample>& batch);
 
 private:
 	Conv2DLayer layer1_;

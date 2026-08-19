@@ -22,12 +22,8 @@ add_executable(Image_Classifier main.cpp
         include/layers/PoolingLayer.h
         src/layers/DenseLayer.cpp
         include/layers/DenseLayer.h
-        src/model/NeuralNetwork.cpp
-        include/model/NeuralNetwork.h
         src/model/LossFunction.cpp
         include/model/LossFunction.h
-        src/model/Optimiser.cpp
-        include/model/Optimiser.h
         src/model/Model.cpp
         include/model/Model.h
 )

@@ -26,7 +26,7 @@ Conv2DLayer::Conv2DLayer(const size_t num_filters, const size_t filter_size, con
     // Define the normal distribution centered at 0.0 with the calculated spread
     std::normal_distribution<float> dist(0.0, std_dev);
 
-    // 4. Generate the filters
+    // Generate the filters
     for (size_t i = 0; i < num_filters_; ++i) {
         // Create a new empty filter Matrix3D
         Matrix3D filter(input_depth_, filter_size_, filter_size_, 0.0);
@@ -44,7 +44,7 @@ Conv2DLayer::Conv2DLayer(const size_t num_filters, const size_t filter_size, con
         filters_.push_back(filter);
 
         // Initialize biases to 0.0
-        biases_.push_back(0.0);
+        biases_.push_back(0.0f);
     }
 }
 
