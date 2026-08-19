@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <omp.h>
+#include <random>
 
 #include "../../include/model/Model.h"
 #include "../../include/utils/Utilities.h"
@@ -210,8 +211,8 @@ void Window::on_upload_button_clicked() {
 	progress_bar_.set_visible(true);
 
 	std::thread worker_thread([this] {
-		int total_cores = std::thread::hardware_concurrency();
-		int threads_to_use = std::max(1, total_cores - 2);
+		const int total_cores = std::thread::hardware_concurrency();
+		const int threads_to_use = std::max(1, total_cores - 2);
 		omp_set_num_threads(threads_to_use);
 
 		try {
@@ -219,33 +220,45 @@ void Window::on_upload_button_clicked() {
 
 			const std::string dataset1_dir = "./datasets/dataset_one";
 			const std::string dataset2_dir = "./datasets/dataset_two";
-			std::vector<std::string> image_paths;
+			std::vector<LabeledSample> dataset;
 
-			// Collect all valid file paths sequentially
-			if (std::filesystem::exists(dataset1_dir)) {
-				for (const auto& entry : std::filesystem::recursive_directory_iterator(dataset1_dir)) {
+			// Helper lambda to collect samples with their assigned label
+			auto collect_images = [](const std::string& dir, const size_t label, std::vector<LabeledSample>& out) {
+				if (!std::filesystem::exists(dir)) return;
+
+				for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
 					if (entry.is_regular_file()) {
-						if (std::string ext = entry.path().extension().string(); ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
-							image_paths.push_back(entry.path().string());
+						const std::string ext = entry.path().extension().string();
+						if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+							out.push_back(LabeledSample{entry.path().string(), label});
 						}
 					}
 				}
-			}
+			};
 
-			size_t total_images = image_paths.size();
+			// 1. Collect both datasets
+			collect_images(dataset1_dir, 0, dataset);
+			collect_images(dataset2_dir, 1, dataset);
+
+			// 2. Shuffle so batches contain an even mixture of both classes
+			std::random_device rd;
+			std::mt19937 g(rd());
+			std::ranges::shuffle(dataset, g);
+
+			const size_t total_images = dataset.size();
 			size_t processed_images = 0;
-
 			constexpr size_t batch_size = 32;
 
-			for (size_t i = 0; i < image_paths.size(); i += batch_size) {
-				const size_t current_batch_size = std::min(batch_size, image_paths.size() - i);
+			// 3. Batch processing
+			for (size_t i = 0; i < dataset.size(); i += batch_size) {
+				const size_t current_batch_size = std::min(batch_size, dataset.size() - i);
 
-				std::vector batch_paths(
-					image_paths.begin() + i,
-					image_paths.begin() + i + current_batch_size
+				std::vector<LabeledSample> batch_samples(
+					dataset.begin() + i,
+					dataset.begin() + i + current_batch_size
 				);
 
-				model.train_batch(batch_paths);
+				model.train_batch(batch_samples);
 
 				processed_images += current_batch_size;
 				progress_fraction_ = static_cast<double>(processed_images) / total_images;

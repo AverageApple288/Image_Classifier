@@ -44,6 +44,10 @@ public:
 
 	Matrix3D apply_relu();
 
+	[[nodiscard]] const std::vector<float>& get_flat_data() const {
+		return data_;
+	}
+
 	// Utility
 	void print() const;
 };
